@@ -1,0 +1,4 @@
+/venv/
+/logs/
+/application.pid
+/.idea/
