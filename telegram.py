@@ -3,12 +3,14 @@ import logging
 
 import telepot.aio
 import telepot.aio.helper
-# from telegram.btn_handler import btn_pressed_handlers
-# from telegram.chat_helper import ChatHelper
+from aiohttp import ClientSession
+from emoji import emojize
 from telepot.aio.delegate import include_callback_query_chat_id, pave_event_space, per_chat_id, create_open
 from telepot.aio.loop import MessageLoop
+from telepot.namedtuple import InlineKeyboardButton
 
 from bot_helper import BotHelper
+from message import TelegramMessage
 
 
 class TelegramHandler:
@@ -32,34 +34,31 @@ class TelegramHandler:
     async def on_callback_query(self, msg):
         query_id, from_id, query_data = telepot.glance(msg, flavor='callback_query')
 
-        btn_class_name = query_data
-        btn_extra_name = None
-        btn_extra_name_start_pos = query_data.rfind('?')
+        try:
+            async with ClientSession() as session:
+                # http method 선택할 수 있게 처리하자.
+                async with session.request('GET', query_data, params={'chat_id': from_id}) as response:
+                    if response.status != 200:
+                        await self._bot_helper.send(from_id,
+                                                    f":heavy_exclamation_mark:run callback_url failed {response.reason}")
+        except Exception as e:
+            logging.exception(e)
 
-        if btn_extra_name_start_pos != -1:
-            btn_class_name = query_data[:btn_extra_name_start_pos]
-            btn_extra_name = query_data[btn_extra_name_start_pos + 1:]
+    async def on_web_server_message(self, msg: TelegramMessage):
+        keyboard_buttons = []
+        line_button = []
+        for button in msg.buttons:
+            line_button.append(InlineKeyboardButton(text=emojize(button.text, use_aliases=True),
+                                                    callback_data=button.callback_url))
 
-        # if btn_class_name in btn_pressed_handlers:
-        #     try:
-        #         pass
-        #         await btn_pressed_handlers[btn_class_name].on_pressed(
-        #             self._bot_helper,
-        #             self._chat_helper,
-        #             btn_extra_name,
-        #             self._broker_msg_processor,
-        #             self._order_id_to_msg_id,
-        #             telepot.origin_identifier(msg)[1]
-        #         )
-        #     except Exception as e:
-        #         await self._bot_helper.send(f":heavy_exclamation_mark:{btn_class_name} on_pressed Exception : {str(e)}",
-        #                                     parse_mode=None)
-        #         logging.exception(btn_class_name)
-        # else:
-        #     await self._bot_helper.send("해당 버튼에 대한 처리가 존재하지 않습니다.")
+            if len(line_button) == 2 or not button.is_horizontal:
+                keyboard_buttons.append(line_button)
+                line_button = []
 
-    async def on_web_server_message(self, msg):
-        await self._bot_helper.send(msg['chat_id'], msg['text'], parse_mode=None)
+        if line_button:
+            keyboard_buttons.append(line_button)
+
+        await self._bot_helper.send(msg.chat_id, msg.text, keyboard_buttons=keyboard_buttons, parse_mode=msg.parse_mode)
 
 
 class MyChatHandler(telepot.aio.helper.ChatHandler):
