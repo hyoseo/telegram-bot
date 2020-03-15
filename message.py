@@ -1,7 +1,8 @@
 class TelegramButton:
-    def __init__(self, text, callback_url, is_horizontal=False):
+    def __init__(self, text, callback_url, callback_http_method='GET', is_horizontal=False):
         self._text = text
         self._callback_url = callback_url
+        self._callback_http_method = callback_http_method
         self._is_horizontal = is_horizontal
 
     @property
@@ -11,6 +12,10 @@ class TelegramButton:
     @property
     def callback_url(self):
         return self._callback_url
+
+    @property
+    def callback_http_method(self):
+        return self._callback_http_method
 
     @property
     def is_horizontal(self):
@@ -29,6 +34,8 @@ class TelegramMessage:
                 self._buttons.append(
                     TelegramButton(btn['text'],
                                    btn['callback_url'],
+                                   callback_http_method=btn['callback_http_method']
+                                   if 'callback_http_method' in btn else 'GET',
                                    is_horizontal=btn['is_horizontal'] if 'is_horizontal' in btn else False))
 
     @property

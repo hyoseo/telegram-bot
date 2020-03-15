@@ -35,21 +35,26 @@ class TelegramHandler:
         query_id, from_id, query_data = telepot.glance(msg, flavor='callback_query')
 
         try:
+            split_pos = query_data.find('@')
+            http_method = query_data[:split_pos]
+            callback_url = query_data[split_pos + 1:]
+
             async with ClientSession() as session:
-                # http method 선택할 수 있게 처리하자.
-                async with session.request('GET', query_data, params={'chat_id': from_id}) as response:
+                async with session.request(http_method, callback_url, params={'chat_id': from_id}) as response:
                     if response.status != 200:
                         await self._bot_helper.send(from_id,
                                                     f":heavy_exclamation_mark:run callback_url failed {response.reason}")
         except Exception as e:
             logging.exception(e)
+            await self._bot_helper.send(from_id,
+                                        f":heavy_exclamation_mark:button handling failed {e}")
 
     async def on_web_server_message(self, msg: TelegramMessage):
         keyboard_buttons = []
         line_button = []
         for button in msg.buttons:
             line_button.append(InlineKeyboardButton(text=emojize(button.text, use_aliases=True),
-                                                    callback_data=button.callback_url))
+                                                    callback_data=f"{button.callback_http_method}@{button.callback_url}"))
 
             if len(line_button) == 2 or not button.is_horizontal:
                 keyboard_buttons.append(line_button)

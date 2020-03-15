@@ -12,6 +12,24 @@ class MessageHandler(tornado.web.RequestHandler):
     def initialize(self, to_telegram_queue: asyncio.Queue):
         self._to_telegram_queue = to_telegram_queue
 
+    # message format example
+    # {
+    # 	"chat_id": 000000000,
+    # 	"text": "hghhh",
+    # 	"buttons": [
+    # 		{
+    # 			"text": ":o:Yes",
+    # 			"callback_url": "http://localhost:19800/test?i=30",
+    # 			"callback_http_method": "POST",
+    # 			"is_horizontal": true
+    # 		},
+    # 		{
+    # 			"text": "No",
+    # 			"callback_url": "https://www.google.co.kr/"
+    # 		}
+    # 	]
+    # }
+
     async def post(self):
         self.set_header("Content-Type", "application/json")
         msg = json.loads(self.request.body)
@@ -37,18 +55,7 @@ class MessageHandler(tornado.web.RequestHandler):
         self.write(json.dumps({'error_code': 0, 'error_message': None, 'result': {}}))
 
 
-class TestHandler(tornado.web.RequestHandler):
-    async def post(self):
-        print(self.request.full_url())
-        print('chat_id :', self.request.query_arguments)
-
-    async def get(self):
-        print(self.request.full_url())
-        print('chat_id :', self.request.query_arguments)
-
-
 def create_web_server(to_telegram_queue: asyncio.Queue):
     return tornado.web.Application([
         (r"/messages", MessageHandler, {'to_telegram_queue': to_telegram_queue}),
-        (r"/test", TestHandler),
     ])
