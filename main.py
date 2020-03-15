@@ -35,6 +35,3 @@ if __name__ == "__main__":
         TelegramBot(TELEGRAM_TOKEN, web_server_to_telegram_queue).run()
 
         asyncio.get_event_loop().run_forever()
-
-
-
