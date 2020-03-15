@@ -1,3 +1,6 @@
+emoji==0.5.4
+telepot==12.7
+tornado==6.0.4
 coloredlogs==14.0
 humanfriendly==8.1
 pyreadline==2.1
