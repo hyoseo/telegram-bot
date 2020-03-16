@@ -71,6 +71,7 @@ Message Format:
 - `<chat_id>` is the chat_id which you want to send to.
 If you don't know how get chat_id, start your telegram bot and type /getchatid. Bot will show you your chat_id.
 - `buttons` field is optional. If you use that and add button, you must include `text` and `callback_url` field.
+- If you click the button you made in telegram, the `callback_url` you registered is called.
 
 ## Docker image
 You can use this more easily by [telegram-bot Docker image](https://hub.docker.com/r/hyoseo/telegram-bot).
